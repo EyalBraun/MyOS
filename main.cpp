@@ -2,16 +2,19 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include "."
 using namespace std;
 //
 string commands[64];
+vector <void (*) (vector <string>)> cmds_defs;
 
-void compile_command(string c){
-  // the index is = ((f*31) + l ) %64
-  // the f = first letter , l = last letter.
-  
-  
+void compile_commands(string s, vector <string >  args){
+  cmds_defs[get_idx(s)](args);
+
+
 }
+
+
 void base_display(string name,string dir){
   cout<<name<<":"<<dir<<endl;
 }
@@ -36,13 +39,14 @@ int main(){
   string name; cout<<"Whats the Owner Name ? : "; cin >> name;
   string dir = "root";
   for(int i = 0;i<64;i++){
-    if(commands[i] != "")cout<<commands[i] << endl;
+    if(commands[i] != "")cout<<"name : " << commands[i] << "index : " << i<< endl;
   }
   while(true){
         base_display(name,dir);
 
-        string com; cin >> com; 
-      if(com == "kill") break;
+        string com; cin >> com;
+
+      
 
 
         
