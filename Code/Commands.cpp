@@ -5,13 +5,16 @@ using namespace std;
 
 int get_idx(string s) {
     if (s.empty()) return -1;
-    // Corrected math syntax
-    return (s[0] * 31 + s[s.size() - 1]) % 64;
+    // Using unsigned prevents overflow issues with small arrays
+    return (unsigned(s[0] * 31 + s[s.size() - 1])) % 64;
 }
 
 void build_commands() {
-    // Fill jump table
-    #define X(name) cmds_defs[get_idx(#name)] = handle_##name;
+    #define X(name) \
+        int idx_##name = get_idx(#name); \
+        cmds_defs[idx_##name] = handle_##name; \
+        commands[idx_##name] = #name; 
+    
     COMMAND_LIST
     #undef X
 }
@@ -25,7 +28,15 @@ void compile_commands(string s, node*& current, vector<string> args) {
     }
 }
 
-// Implement the "Handles" (Wrappers)
+void handle_help(node*& current, const vector<string>& args) {
+    cout << "Supported commands:" << endl;
+    for (int i = 0; i < 64; i++) {
+        if (!commands[i].empty()) {
+            cout << " - " << commands[i] << endl;
+        }
+    }
+}
+
 void handle_pwd(node*& current, const vector<string>& args) {
     pwd(current);
     cout << endl;
@@ -45,6 +56,10 @@ void handle_mkdir(node*& current, const vector<string>& args) {
 
 void handle_cd(node*& current, const vector<string>& args) {
     if (args.empty()) return;
+    if (args[0] == ".." && current->parent != nullptr) {
+        current = current->parent;
+        return;
+    }
     for (auto const& child : current->children) {
         if (child->name == args[0] && child->isdir) {
             current = child.get();
@@ -54,12 +69,8 @@ void handle_cd(node*& current, const vector<string>& args) {
     cout << "Directory not found." << endl;
 }
 
-// Core Logic for PWD
 void pwd(node* current) {
     if (current == nullptr) return;
     if (current->parent != nullptr) pwd(current->parent);
     cout << "/" << current->name;
 }
-
-
-

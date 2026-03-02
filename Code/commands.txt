@@ -2,3 +2,4 @@ mkdir
 kill
 cd
 pwd
+help

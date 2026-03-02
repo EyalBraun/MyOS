@@ -2,7 +2,6 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <sstream>
 #include "../Headers/Commands.h"
 
 using namespace std;
@@ -12,14 +11,14 @@ int main() {
 
     auto root = make_unique<node>("root", true, nullptr);
     node* current = root.get();
-
     string owner;
-    cout << "Owner Name: ";
+    
+    cout << "owner name: ";
     cin >> owner;
     cin.ignore();
 
     while (true) {
-        cout << owner << "@OS:";
+        cout << owner << "@os:";
         pwd(current);
         cout << "$ ";
 
@@ -28,14 +27,30 @@ int main() {
         if (input == "exit") break;
         if (input.empty()) continue;
 
-        stringstream ss(input);
-        string cmd;
-        ss >> cmd;
         vector<string> args;
-        string a;
-        while (ss >> a) args.push_back(a);
+        string cmd = "";
+        string word = "";
+        int count = 0;
 
-        compile_commands(cmd, current, args);
+        for (int i = 0; i < input.size(); i++) {
+            if (input[i] != ' ') {
+                word += input[i];
+            } else if (!word.empty()) {
+                if (count == 0) cmd = word;
+                else args.push_back(word);
+                word = "";
+                count++;
+            }
+        }
+        // Handle the last word (no space after it)
+        if (!word.empty()) {
+            if (count == 0) cmd = word;
+            else args.push_back(word);
+        }
+
+        if (!cmd.empty()) {
+            compile_commands(cmd, current, args);
+        }
     }
     return 0;
 }
