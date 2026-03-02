@@ -51,7 +51,9 @@ void handle_ls(node*& current, const vector<string>& args) {
 
 void handle_mkdir(node*& current, const vector<string>& args) {
     if (args.empty()) return;
-    current->children.push_back(make_unique<node>(args[0], true, current));
+    bool isDir = true;
+    for(auto c : args[0]) if(c == '.') isDir = false;
+  current->children.push_back(make_unique<node>(args[0], isDir,current));
 }
 
 void handle_cd(node*& current, const vector<string>& args) {
@@ -73,4 +75,50 @@ void pwd(node* current) {
     if (current == nullptr) return;
     if (current->parent != nullptr) pwd(current->parent);
     cout << "/" << current->name;
+}
+void handle_rm(node*& current, const vector<string>& args) {
+    if (args.empty()) {
+        cout << "rm: missing operand" << endl;
+        return;
+    }
+ bool isFlag = false;
+  string name;
+  if(args[0][0] == '-') {
+   name = args[1];
+    isFlag = true;
+  }
+  else name = args[0] ; 
+
+        auto it = current->children.begin();
+    while (it != current->children.end()) {
+        if ((*it)->name == name) {
+                       if ((*it)->isdir &&isFlag) {
+                bool is_r = false;
+                for(auto x:args[0]) if(x == 'r'){ is_r = true ; break;}
+                if(is_r){
+          current-> children.erase(it);
+
+          return;
+
+        }         else{
+           cout << "rm: cannot remove '" << name << "': Is a directory" << endl;
+                return;
+
+
+        }
+                            
+      }
+      else if((*it)->isdir&& !isFlag) {
+         cout << "rm: cannot remove '" << name << "': Is a directory" << endl;
+        return;
+
+      }                 
+
+        current->children.erase(it);
+            return;
+        }
+        it++;
+    }
+
+    cout << "rm: cannot remove '" << args[0] << "': No such file" << endl;
 }

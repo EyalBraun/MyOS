@@ -10,7 +10,8 @@
     X(cd)            \
     X(mkdir)         \
     X(ls)            \
-    X(help)
+    X(help)          \
+    X(rm)        
 
 typedef void (*CommandFunc)(node*& current, const std::vector<std::string>& args);
 
