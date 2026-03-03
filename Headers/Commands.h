@@ -11,12 +11,14 @@
     X(mkdir)         \
     X(ls)            \
     X(help)          \
-    X(rm)        
+    X(rm)            \
+    X(fv)            \
+    X(find)          \
 
-typedef void (*CommandFunc)(node*& current, const std::vector<std::string>& args);
+// Update typedef to use File*
+typedef void (*CommandFunc)(File*& current, const std::vector<std::string>& args);
 
-// Automated declarations
-#define X(name) void handle_##name(node*& current, const std::vector<std::string>& args);
+#define X(name) void handle_##name(File*& current, const std::vector<std::string>& args);
 COMMAND_LIST
 #undef X
 
@@ -24,8 +26,7 @@ inline CommandFunc cmds_defs[64];
 inline std::string commands[64]; 
 
 void build_commands();
-int get_idx(std::string s);
-void compile_commands(std::string s, node*& current, std::vector<std::string> args);
-void pwd(node* current);
+void compile_commands(std::string s, File*& current, std::vector<std::string> args);
+void pwd(File* current);
 
 #endif

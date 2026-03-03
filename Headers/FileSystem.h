@@ -5,14 +5,24 @@
 #include <vector>
 #include <memory>
 
-class node {
+class File {
 public:
-    bool isdir;
     std::string name;
-    node* parent; 
-    std::vector<std::unique_ptr<node>> children;
+    bool isDir;
+    bool isFav;
+    File *parent;
+    // Note: 'unique_ptr' handles the memory of all children automatically
+    std::vector<std::unique_ptr<File>> children; 
 
-    node(std::string n, bool d, node* p);
+    File(std::string n, bool d, File *p = nullptr);
+};
+
+class OrbitManager {
+public:
+    File *current;
+
+    OrbitManager();  // Constructor will "bootstrap" the root
+    ~OrbitManager(); // Destructor will clean up the root
 };
 
 #endif
