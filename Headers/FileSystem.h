@@ -11,18 +11,19 @@ public:
     bool isDir;
     bool isFav;
     File *parent;
-    // Note: 'unique_ptr' handles the memory of all children automatically
+    std::string Content;
+    // unique_ptr vectors handle the recursive destruction of children automatically
     std::vector<std::unique_ptr<File>> children; 
 
-    File(std::string n, bool d, File *p = nullptr);
+    File(std::string n, bool d, bool f, File *p = nullptr, std::string c = "");
 };
 
 class OrbitManager {
 public:
     File *current;
 
-    OrbitManager();  // Constructor will "bootstrap" the root
-    ~OrbitManager(); // Destructor will clean up the root
+    OrbitManager();
+    ~OrbitManager(); // Standard destructor to handle root-less cleanup
 };
 
 #endif

@@ -8,10 +8,8 @@
 using namespace std;
 
 int main() {
-    // 1. Initialize the Jump Table for commands
     build_commands();
     
-    // 2. Initialize the Orbit Engine
     OrbitManager orbit; 
     string owner;
     
@@ -21,21 +19,19 @@ int main() {
     
     cout << "Enter Operator Name: ";
     cin >> owner;
-    cin.ignore(); // Clean the buffer for getline
+    cin.ignore(); 
 
     while (true) {
-        // --- Prompt ---
-        cout << "\033[1;36m" << owner << "@orbit\033[0m:";
+        // Prompt עם צבע תכלת לנתיב
+        cout << "\033[1;32m" << owner << "@orbit\033[0m:";
         pwd(orbit.current);
         cout << "$ ";
 
-        // --- Input Capture ---
         string input;
         if (!getline(cin, input)) break;
         if (input == "exit") break;
         if (input.empty()) continue;
 
-        // --- Parsing Logic (Command vs Args) ---
         vector<string> args;
         string cmd = "";
         string word = "";
@@ -55,15 +51,12 @@ int main() {
             }
         }
         
-        // Handle the last word after the loop
         if (!word.empty()) {
             if (!found_cmd) cmd = word;
             else args.push_back(word);
         }
 
-        // --- Execution ---
         if (!cmd.empty()) {
-            // Pass orbit.current by reference to allow 'cd' to work
             compile_commands(cmd, orbit.current, args);
         }
     }
