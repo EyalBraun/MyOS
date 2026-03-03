@@ -16,6 +16,7 @@
     X(find)          \
     X(tree)          \
     X(wtf)           \
+    X(sf)            \
 
 // Update typedef to use File*
 typedef void (*CommandFunc)(File*& current, const std::vector<std::string>& args);

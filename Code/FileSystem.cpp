@@ -24,3 +24,4 @@ OrbitManager::~OrbitManager() {
     // Deleting the root triggers recursive cleanup of all unique_ptr children
     delete rootFinder;
 }
+

@@ -41,6 +41,7 @@ void compile_commands(string s, File*& current, vector<string> args) {
     }
 }
 
+
 /**
  * Recursively prints the current directory path
  */
@@ -192,6 +193,7 @@ void handle_tree(File*& current, const vector<string>& args) {
     }
 }
 
+
 void handle_wtf(File*& current, const vector<string>& args) {
     if (args.empty()) return;
 
@@ -235,3 +237,17 @@ void handle_wtf(File*& current, const vector<string>& args) {
     target->Content = buffer;
     cout << "\nFile Saved." << endl;
 }
+void handle_sf(File*& current, const vector<string>& args){
+  string content;
+  for(auto& child : current->children){
+    if(args[0] == child->name){
+      content = child->Content;
+      break;
+    }
+  }
+  cout<<content<<endl;
+
+
+
+ }
+

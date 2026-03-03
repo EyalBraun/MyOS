@@ -57,7 +57,9 @@ int main() {
         }
 
         if (!cmd.empty()) {
-            compile_commands(cmd, orbit.current, args);
+        
+            
+          compile_commands(cmd, orbit.current, args);
         }
     }
 
