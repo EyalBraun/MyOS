@@ -1,38 +1,30 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
+#include "FileSystem.h"
 #include <string>
 #include <vector>
-#include "FileSystem.h" 
 
 #define COMMAND_LIST \
-    X(pwd)           \
-    X(cd)            \
-    X(mkdir)         \
-    X(ls)            \
-    X(help)          \
-    X(rm)            \
-    X(fv)            \
-    X(find)          \
-    X(tree)          \
-    X(wtf)           \
-    X(sf)            \
-    X(stats)         \
-    X(showfv)        \
-    X(cp)            \
+    X(help)   X(ls)    X(mkdir) \
+    X(cd)     X(save)  X(load)  \
+    X(tree)   X(wtf)   X(sf)    \
+    X(stats)  X(rm)    X(fv)    \
+    X(pwd)    X(find)  X(showfv) X(cp)
 
-// Update typedef to use File*
-typedef void (*CommandFunc)(File*& current, const std::vector<std::string>& args);
+// Global jump tables
+extern std::string commands[64];
+extern void (*cmds_defs[64])(File*&, const std::vector<std::string>&);
 
+// Forward declarations for handlers
 #define X(name) void handle_##name(File*& current, const std::vector<std::string>& args);
 COMMAND_LIST
 #undef X
 
-inline CommandFunc cmds_defs[64];
-inline std::string commands[64]; 
-
 void build_commands();
+int get_idx(std::string s);
 void compile_commands(std::string s, File*& current, std::vector<std::string> args);
 void pwd(File* current);
+File* find_child(File* current, const std::string& name);
 
 #endif

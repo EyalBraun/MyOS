@@ -12,7 +12,6 @@ public:
     bool isFav;
     File *parent;
     std::string Content;
-    // unique_ptr vectors handle the recursive destruction of children automatically
     std::vector<std::unique_ptr<File>> children; 
 
     File(std::string n, bool d, bool f, File *p = nullptr, std::string c = "");
@@ -21,9 +20,8 @@ public:
 class OrbitManager {
 public:
     File *current;
-
     OrbitManager();
-    ~OrbitManager(); // Standard destructor to handle root-less cleanup
+    ~OrbitManager(); 
 };
 
 #endif
