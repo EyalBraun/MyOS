@@ -1,0 +1,19 @@
+help
+mkdir sys
+mkdir usr docs
+ls
+cd usr
+mkdir local bin
+pwd
+cd ..
+tree
+fv docs
+showfv
+cp docs docs_backup
+ls
+find bin
+stats
+rm docs_backup
+ls
+save
+load

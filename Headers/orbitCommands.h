@@ -12,20 +12,22 @@ using namespace std;
     X(ptc, "prints to console!") \
     X(gi, "Gets input from OrbitOS user!")
 
-// טבלאות הקפיצה עבור שפת .orb
+
 extern string orb_commands[64];
 extern string orb_command_descs[64];
-// החתימה חייבת להתאים בדיוק למה שמוגדר ב-handle_...
-extern void (*orb_cmds_defs[64])(vector<string> Code);
+extern void (*orb_cmds_defs[64])(vector<string> args);
 
-// יצירת ה-Prototypes (חייב לקבל vector<string> Code)
-#define X(name, desc) void handle_##name(vector<string> Code);
+#define X(name, desc) void handle_##name(vector <string> args);
 ORB_COMMAND_LIST
 #undef X
 
 void build_orb_commands();
 vector<string> Parse_Code(string Content);
 int get_orb_idx(string s);
+int lookup_orb_command(const string &);
+void Parse_Lines(const vector <string> &);
+vector <string> Parse_Code(string);
+
 
 #endif
 
