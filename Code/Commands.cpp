@@ -6,30 +6,17 @@
 #include <fstream>
 #include <algorithm>
 #include <limits>
-
-using namespace std;
-
-#include "../Headers/Commands.h"
-#include <iostream>
-#include <vector>
-#include <string>
-#include <memory>
-#include <fstream>
-#include <algorithm>
-#include <limits>
+#include <sstream>
 
 using namespace std;
 
 // --- Globals ---
 string commands[64];
 void (*cmds_defs[64])(File*&, const vector<string>&) = {nullptr};
-vector<string> PATHS; // Global storage for search results
+vector<string> PATHS; 
 
 // --- Logic & Helpers ---
 
-/**
- * Converts a File pointer into a full path string (e.g., /root/folder/file)
- */
 string get_path_string(File* current) {
     if (!current) return "";
     if (current->parent == nullptr) return "/";
@@ -43,9 +30,6 @@ string get_path_string(File* current) {
     return full_path;
 }
 
-/**
- * Custom Hash function for command mapping
- */
 int get_idx(string s) {
     if (s.empty()) return -1;
     return (unsigned((s[0] * 31) ^ (s[s.size() - 1] * 91) ^ (s.size() * 13))) % 64;
@@ -79,7 +63,7 @@ unique_ptr<File> clone_node(File* source, File* new_parent) {
     return newNode;
 }
 
-// --- Persistence (Binary Save/Load) ---
+// --- Persistence ---
 
 void save_recursive(File* node, ofstream& out) {
     if (!node) return;
@@ -127,28 +111,38 @@ void handle_ls(File*& current, const vector<string>& args) {
 
 void handle_mkdir(File*& current, const vector<string>& args) {
     if (args.empty()) return;
-    File* temp = current;
-    for (const string& part : args) {
-        File* next = find_child(temp, part);
-        if (!next) {
-            auto newNode = make_unique<File>(part, part.find('.') == string::npos, false, temp);
-            File* ptr = newNode.get();
-            temp->children.push_back(move(newNode));
-            temp = ptr;
-        } else temp = next;
+    for (const string& full_arg : args) {
+        File* temp = current;
+        stringstream ss(full_arg);
+        string part;
+        while (getline(ss, part, '/')) {
+            if (part.empty()) continue;
+            File* next = find_child(temp, part);
+            if (!next) {
+                auto newNode = make_unique<File>(part, true, false, temp);
+                File* ptr = newNode.get();
+                temp->children.push_back(move(newNode));
+                temp = ptr;
+            } else temp = next;
+        }
     }
 }
 
 void handle_cd(File*& current, const vector<string>& args) {
     if (args.empty()) return;
     File* target = current;
-    for (const string& part : args) {
-        if (part == "root") { while (target->parent) target = target->parent; }
-        else if (part == "..") { if (target->parent) target = target->parent; }
-        else {
-            File* next = find_child(target, part);
-            if (next && next->isDir) target = next;
-            else { cout << "cd: " << part << ": No such directory" << endl; return; }
+    for (const string& full_arg : args) {
+        stringstream ss(full_arg);
+        string part;
+        while (getline(ss, part, '/')) {
+            if (part.empty()) continue;
+            if (part == "root") { while (target->parent) target = target->parent; }
+            else if (part == "..") { if (target->parent) target = target->parent; }
+            else {
+                File* next = find_child(target, part);
+                if (next && next->isDir) target = next;
+                else { cout << "cd: " << part << ": No such directory" << endl; return; }
+            }
         }
     }
     current = target;
@@ -259,43 +253,27 @@ void handle_find(File*& current, const vector<string>& args) {
     rec(rec, r);
 }
 
-/**
- * FIXED fc_rec: Recursive search for exact file content.
- * Changed return type to void and added recursive loop.
- */
 void fc_rec(File* node, const string& content) {
     if (node == nullptr) return;
-
-    // Only compare content if it is a file (not a directory)
     if (!node->isDir && node->Content == content) {
         PATHS.push_back(get_path_string(node));
     }
-
-    // Recursively check all children
     for (auto const& child : node->children) {
         fc_rec(child.get(), content);
     }
 }
 
-/**
- * handle_fc: Find Content
- */
 void handle_fc(File*& current, const vector<string>& args) {
     cout << "Recording content to search (q to stop):" << endl;
     string buf; char c; 
     while (cin.get(c) && c != 'q') buf += c;
-    
-    // Clear input buffer properly
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-    if(buf.empty()){
-        cout << "Search cancelled or empty." << endl;
-        return;
-    }
+    if(buf.empty()) return;
 
-    PATHS.clear(); // Clear previous results
+    PATHS.clear(); 
     File* root = current;
-    while(root->parent) root = root->parent; // Search globally from root
+    while(root->parent) root = root->parent; 
 
     fc_rec(root, buf);
 
@@ -313,20 +291,31 @@ void handle_pwd(File*& current, const vector<string>& args) { pwd_rec(current); 
 
 void build_commands() {
     #define X(name) \
-        { int idx = get_idx(#name); \
-          cmds_defs[idx] = handle_##name; \
-          commands[idx] = #name; }
+        { \
+            int idx = get_idx(#name); \
+            while (!commands[idx].empty()) idx = (idx + 1) % 64; \
+            cmds_defs[idx] = handle_##name; \
+            commands[idx] = #name; \
+        }
     COMMAND_LIST
     #undef X
 }
 
 void compile_commands(string s, File*& current, vector<string> args) {
     int idx = get_idx(s);
-    if (idx != -1 && commands[idx] == s && cmds_defs[idx]) {
-        cmds_defs[idx](current, args);
-    } else {
-        cout << s << ": command not found" << endl;
+    int start_idx = idx;
+
+    while (!commands[idx].empty()) {
+        if (commands[idx] == s) {
+            if (cmds_defs[idx]) {
+                cmds_defs[idx](current, args);
+                return;
+            }
+        }
+        idx = (idx + 1) % 64;
+        if (idx == start_idx) break; 
     }
+    cout << s << ": command not found" << endl;
 }
 
 void pwd(File* current) {
