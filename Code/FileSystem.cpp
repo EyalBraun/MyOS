@@ -3,13 +3,13 @@
 using namespace std;
 
 // Constructor: Content moved to the end as per the header defaults
-File::File(string n, bool d, bool f, File *p, string c) 
-    : name(n), isDir(d), isFav(f), parent(p), Content(c) {}
+File::File(string n, bool d, bool f, bool e, File *p, string c) 
+    : name(n), isDir(d), isFav(f), isExc(e), parent(p), Content(c) {}
 
 OrbitManager::OrbitManager() {
     // Initializing the root node. We don't store it as a unique_ptr member,
     // but its children will be unique_ptrs.
-    File* root = new File("/", true, false, nullptr);
+    File* root = new File("/", true, false,false, nullptr);
     current = root; 
 }
 

@@ -33,7 +33,6 @@ string get_path_string(File* current) {
 
 int get_idx(string s) {
     if (s.empty()) return -1;
-    // Your custom XOR hash function
     return (unsigned((s[0] * 31) ^ (s[s.size() - 1] * 91) ^ (s.size() * 13))) % 64;
 }
 
@@ -59,7 +58,8 @@ size_t get_total_size(File* node) {
 }
 
 unique_ptr<File> clone_node(File* source, File* new_parent) {
-    auto newNode = make_unique<File>(source->name, source->isDir, source->isFav, new_parent, source->Content);
+    // Added source->isExc to the clone constructor
+    auto newNode = make_unique<File>(source->name, source->isDir, source->isFav, source->isExc, new_parent, source->Content);
     for (auto const& child : source->children) 
         newNode->children.push_back(clone_node(child.get(), newNode.get()));
     return newNode;
@@ -74,6 +74,7 @@ void save_recursive(File* node, ofstream& out) {
     out.write(node->name.c_str(), nLen);
     out.write((char*)&node->isDir, sizeof(node->isDir));
     out.write((char*)&node->isFav, sizeof(node->isFav));
+    out.write((char*)&node->isExc, sizeof(node->isExc)); // Persistence for executable flag
     out.write((char*)&cLen, sizeof(cLen));
     out.write(node->Content.c_str(), cLen);
     out.write((char*)&cCount, sizeof(cCount));
@@ -82,13 +83,15 @@ void save_recursive(File* node, ofstream& out) {
 
 unique_ptr<File> load_recursive(ifstream& in, File* parent) {
     size_t nLen, cLen, cCount;
-    bool d, f;
+    bool d, f, e; // Added 'e' for isExc
     if (!in.read((char*)&nLen, sizeof(nLen))) return nullptr;
     string name(nLen, ' '); in.read(&name[0], nLen);
-    in.read((char*)&d, sizeof(d)); in.read((char*)&f, sizeof(f));
+    in.read((char*)&d, sizeof(d)); 
+    in.read((char*)&f, sizeof(f));
+    in.read((char*)&e, sizeof(e)); // Load executable flag
     in.read((char*)&cLen, sizeof(cLen));
     string content(cLen, ' '); if (cLen > 0) in.read(&content[0], cLen);
-    auto newNode = make_unique<File>(name, d, f, parent, content);
+    auto newNode = make_unique<File>(name, d, f, e, parent, content);
     if (!in.read((char*)&cCount, sizeof(cCount))) return newNode;
     for (size_t i = 0; i < cCount; ++i) {
         auto child = load_recursive(in, newNode.get());
@@ -106,7 +109,6 @@ void handle_help(File*& current, const vector<string>& args) {
     for (int i = 0; i < 64; i++) {
         if (!commands[i].empty()) list.push_back({commands[i], command_descs[i]});
     }
-    // Sort for better UX
     sort(list.begin(), list.end(), [](const HelpItem& a, const HelpItem& b) { return a.n < b.n; });
     for (const auto& item : list) {
         string pad(10 - item.n.length(), ' ');
@@ -130,7 +132,8 @@ void handle_mkdir(File*& current, const vector<string>& args) {
             if (part.empty()) continue;
             File* next = find_child(temp, part);
             if (!next) {
-                auto newNode = make_unique<File>(part, true, false, temp);
+                // Directories are created with isExc = false
+                auto newNode = make_unique<File>(part, true, false, false, temp);
                 File* ptr = newNode.get();
                 temp->children.push_back(move(newNode));
                 temp = ptr;
@@ -139,6 +142,9 @@ void handle_mkdir(File*& current, const vector<string>& args) {
     }
 }
 
+void handle_exc(File*& current, const vector<string>& args) {
+    cout << "Executable logic is not yet implemented." << endl;
+}
 void handle_cd(File*& current, const vector<string>& args) {
     if (args.empty()) return;
     File* target = current;
@@ -201,7 +207,8 @@ void handle_wtf(File*& current, const vector<string>& args) {
     if (args.empty()) return;
     File* target = find_child(current, args[0]);
     if (!target) { 
-        current->children.push_back(make_unique<File>(args[0], false, false, current)); 
+        // New files are created with isExc = false
+        current->children.push_back(make_unique<File>(args[0], false, false, false, current)); 
         target = current->children.back().get(); 
     }
     cout << "Recording (q to stop):" << endl;
@@ -301,11 +308,10 @@ void handle_pwd(File*& current, const vector<string>& args) { pwd_rec(current); 
 // --- Infrastructure ---
 
 void build_commands() {
-    // X now takes 2 arguments: name and description
     #define X(name, desc) \
         { \
             int idx = get_idx(#name); \
-            while (!commands[idx].empty()) idx = (idx + 1) % 64; /* Linear Probing */ \
+            while (!commands[idx].empty()) idx = (idx + 1) % 64; \
             cmds_defs[idx] = handle_##name; \
             commands[idx] = #name; \
             command_descs[idx] = desc; \
@@ -318,7 +324,6 @@ void compile_commands(string s, File*& current, vector<string> args) {
     int idx = get_idx(s);
     int start_idx = idx;
 
-    // Correct search loop for Linear Probing
     while (!commands[idx].empty()) {
         if (commands[idx] == s) {
             if (cmds_defs[idx]) {
