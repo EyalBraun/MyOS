@@ -12,6 +12,7 @@ using namespace std;
 
 // --- Globals ---
 string commands[64];
+string command_descs[64];
 void (*cmds_defs[64])(File*&, const vector<string>&) = {nullptr};
 vector<string> PATHS; 
 
@@ -32,6 +33,7 @@ string get_path_string(File* current) {
 
 int get_idx(string s) {
     if (s.empty()) return -1;
+    // Your custom XOR hash function
     return (unsigned((s[0] * 31) ^ (s[s.size() - 1] * 91) ^ (s.size() * 13))) % 64;
 }
 
@@ -98,9 +100,18 @@ unique_ptr<File> load_recursive(ifstream& in, File* parent) {
 // --- Command Handlers ---
 
 void handle_help(File*& current, const vector<string>& args) {
-    cout << "OrbitOS Commands: ";
-    for (int i = 0; i < 64; i++) if (!commands[i].empty()) cout << commands[i] << " ";
-    cout << endl;
+    cout << "\n--- OrbitOS Command Reference ---" << endl;
+    struct HelpItem { string n; string d; };
+    vector<HelpItem> list;
+    for (int i = 0; i < 64; i++) {
+        if (!commands[i].empty()) list.push_back({commands[i], command_descs[i]});
+    }
+    // Sort for better UX
+    sort(list.begin(), list.end(), [](const HelpItem& a, const HelpItem& b) { return a.n < b.n; });
+    for (const auto& item : list) {
+        string pad(10 - item.n.length(), ' ');
+        cout << "  " << item.n << pad << "| " << item.d << endl;
+    }
 }
 
 void handle_ls(File*& current, const vector<string>& args) {
@@ -290,12 +301,14 @@ void handle_pwd(File*& current, const vector<string>& args) { pwd_rec(current); 
 // --- Infrastructure ---
 
 void build_commands() {
-    #define X(name) \
+    // X now takes 2 arguments: name and description
+    #define X(name, desc) \
         { \
             int idx = get_idx(#name); \
-            while (!commands[idx].empty()) idx = (idx + 1) % 64; \
+            while (!commands[idx].empty()) idx = (idx + 1) % 64; /* Linear Probing */ \
             cmds_defs[idx] = handle_##name; \
             commands[idx] = #name; \
+            command_descs[idx] = desc; \
         }
     COMMAND_LIST
     #undef X
@@ -305,6 +318,7 @@ void compile_commands(string s, File*& current, vector<string> args) {
     int idx = get_idx(s);
     int start_idx = idx;
 
+    // Correct search loop for Linear Probing
     while (!commands[idx].empty()) {
         if (commands[idx] == s) {
             if (cmds_defs[idx]) {
