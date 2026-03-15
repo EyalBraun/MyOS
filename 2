@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <limits>
 #include <sstream>
-#include "../include/orbitCommands.h"
 
 using namespace std;
 
@@ -161,22 +160,11 @@ void handle_mkdir(File*& current, const vector<string>& args) {
 void handle_exc(File*& current, const vector<string>& args) {
   
   bool is_e = false;
-  File *exucutable = nullptr;
   for(auto &child : current -> children){
     if(child->name == args[0]){
       is_e = child->isExc;
-      exucutable = child.get();
                     
     }
-  }
-  if(!is_e && exucutable) cout<<"File is not exucutable , needed the ending of .orb"<<endl;
-  if(!exucutable) cout<<"couldnt find file"<<endl;
-  else if (is_e && exucutable){
-    cout<<"exucuting >>>>>>> "<<endl;
-    Parse_Lines(Parse_Code(exucutable->Content));
-
-    
-
   }
     
    
@@ -245,14 +233,7 @@ void handle_wtf(File*& current, const vector<string>& args) {
     File* target = find_child(current, args[0]);
     if (!target) { 
         // New files are created with isExc = false
-        bool dot_start = false;
-        string FileType = "";
-        for(auto c : args[0]){
-      if(c == '.') dot_start = true;
-      if(dot_start) FileType += c;
-
-    }
-        current->children.push_back(make_unique<File>(args[0], false, false, FileType == ".orb", current)); 
+        current->children.push_back(make_unique<File>(args[0], false, false, false, current)); 
         target = current->children.back().get(); 
     }
     cout << "Recording (q to stop):" << endl;

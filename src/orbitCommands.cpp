@@ -150,6 +150,7 @@ void Parse_Lines(const vector<string>& Lines) {
                 orb_cmds_defs[target_idx](args); 
             } else {
                 cout << "OrbitOS Error: command not found -> " << cmd << endl;
+                
             }
         }
     }

@@ -1,13 +1,16 @@
 #include "../include/FileSystem.h"
 #include "../include/Commands.h"
 #include "../include/orbitCommands.h"
+#include "../include/orbitCommands.h"
 #include <iostream>
 
 using namespace std;
 
 int main() {
     build_commands();
-    OrbitManager orbit;
+    build_orb_commands();
+       
+  OrbitManager orbit;
     string owner;
 
     cout << "------------------------------------------" << endl;
