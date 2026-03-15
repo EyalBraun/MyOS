@@ -6,12 +6,22 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <cstdio> // Added for std::remove
 
 using namespace std;
 
+// Define a dedicated disk file for testing
+const string TEST_DISK = "data/test_disk.bin";
+
 int main() {
+    // 1. Wipe the test disk before starting to ensure a clean state
+    std::remove(TEST_DISK.c_str());
+
     build_commands();
     build_orb_commands();
+    
+    // Note: Ensure your save/load logic in orbitCommands.cpp 
+    // uses TEST_DISK when running in test mode.
     
     auto root = make_unique<File>("/", true, false, false, nullptr, "");
     File* current = root.get();
@@ -24,7 +34,7 @@ int main() {
 
     // --- Redirection Setup ---
     streambuf* terminal_cout = cout.rdbuf(); 
-    stringstream silent_buffer;            
+    stringstream silent_buffer;             
     // -------------------------
 
     string line;
@@ -32,6 +42,7 @@ int main() {
     int fail_count = 0;
 
     cout << "--- OrbitOS Automated Diagnostic Report ---" << endl;
+    cout << "Using Test Disk: " << TEST_DISK << endl;
 
     while (getline(file, line)) {
         if (line.empty() || line[0] == '#') continue; 
@@ -44,24 +55,22 @@ int main() {
         string arg;
         while (ss >> arg) args.push_back(arg);
 
-        // 1. Redirect output to the silent buffer
+        // Redirect output
         cout.rdbuf(silent_buffer.rdbuf());
 
-        // 2. Execute
+        // Execute
         compile_commands(cmd, current, args);
 
-        // 3. Switch back to terminal to check results
+        // Switch back to terminal
         string output = silent_buffer.str();
         cout.rdbuf(terminal_cout);
 
-        // 4. Logic: If "Error" or "not found" is in the output, showcase it
         if (output.find("Error") != string::npos || output.find("not found") != string::npos) {
             cout << "[FAIL] Line " << line_num << ": " << line << endl;
-            cout << "      Reason: " << output; // Show the hidden error message
+            cout << "      Reason: " << output; 
             fail_count++;
         }
 
-        // Clear buffer for the next loop
         silent_buffer.str("");
         silent_buffer.clear();
     }
